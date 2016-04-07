@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2.7
 import cv2
 import os
 import numpy as np
 import sys
-import colorsys
 
 os.system('')
 # Note: System arguments should take the form of an IP address of the video
@@ -34,10 +33,31 @@ def imgScale(toScale, percentX, percentY):
     return scaledImg
 
 
-def HSL2BGR(h, s, l):
-    bgr = []
-    tmp = colorsys.hls_to_rgb(h, l, s)
-    rgb[0] = tmp[0]
-    rgb[1] = tmp[1]
-    rgb[2] = tmp[2]
-    return bgr
+def threshHSL(imgSrc, lower, upper):
+    """Returns binary mask of image based on HSL bounds"""
+    imgSrcHSL = cv2.cvtColor(imgSrc, cv2.COLOR_BGR2HSL)
+    tmp = cv2.inRange(imgSrcHSL, lower, upper)
+    return tmp
+
+
+def threshRGB(imgSrc, lower, upper):
+    """Returns binary mask of image based on RGB bounds"""
+    imgSrcRGB = cv2.cvtColor(imgSrc, cv2.COLOR_BGR2RGB)
+    tmp = cv2.inRange(imgSrcRGB, lower, upper)
+    return tmp
+
+
+def cvAdd(img1, img2):
+    """Returns addition of 2 images"""
+    tmp = cv2.add(img1, img2)
+    return tmp
+
+
+def findContours(img):
+    """Finds contours in image, preferably binary image"""
+    img2, contours, hierarchy = \
+        cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+
+x = percentFromResolution(ret, 640, 480)
+print (x)
