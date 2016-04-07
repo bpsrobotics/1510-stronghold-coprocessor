@@ -1,23 +1,24 @@
 #!/usr/bin/env python2.7
 import cv2
-import os
 import numpy as np
-import sys
+# import sys
 
-os.system('')
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
 
-srcImg = cv2.VideoCapture()  # Define srcImg as image/video capture
+# srcImg = cv2.VideoCapture()  # Define srcImg as image/video capture
+#
+# if len(sys.argv) != 2:
+#     print("Error: specify an URL to connect to")
+#     exit(0)
+#
+# url = sys.argv[1]
+#
+# srcImg.open("http://127.0.0.1:8080/stream.wmv")
+# ret, frameImg = srcImg.read()  # Test
+# imgY, imgX, imgChannels = frameImg.shape
 
-if len(sys.argv) != 2:
-    print("Error: specify an URL to connect to")
-    exit(0)
-
-url = sys.argv[1]
-
-srcImg.open(url)
-ret, frameImg = srcImg.read()  # Test
+srcImg = cv2.imread("/home/solomon/the-deal/RealFullField/19.jpg", 1)
 
 
 def percentFromResolution(srcImg, yTargetRes, xTargetRes):
@@ -35,15 +36,19 @@ def imgScale(toScale, percentX, percentY):
 
 def threshHSL(imgSrc, lower, upper):
     """Returns binary mask of image based on HSL bounds"""
-    imgSrcHSL = cv2.cvtColor(imgSrc, cv2.COLOR_BGR2HSL)
-    tmp = cv2.inRange(imgSrcHSL, lower, upper)
+    imgSrcHLS = cv2.cvtColor(imgSrc, cv2.COLOR_BGR2HLS)
+    npLower = np.array([lower[0], lower[2], lower[1]])  # Compesate for HLSvsHSL
+    npUpper = np.array([upper[0], upper[2], upper[1]])
+    tmp = cv2.inRange(imgSrcHLS, npLower, npUpper)
     return tmp
 
 
 def threshRGB(imgSrc, lower, upper):
     """Returns binary mask of image based on RGB bounds"""
     imgSrcRGB = cv2.cvtColor(imgSrc, cv2.COLOR_BGR2RGB)
-    tmp = cv2.inRange(imgSrcRGB, lower, upper)
+    npLower = np.array([lower[0], lower[1], lower[2]])
+    npUpper = np.array([upper[0], upper[1], upper[2]])
+    tmp = cv2.inRange(imgSrcRGB, npLower, npUpper)
     return tmp
 
 
@@ -59,5 +64,9 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
 
-x = percentFromResolution(ret, 640, 480)
-print (x)
+x = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
+y = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
+z = cvAdd(x, y)
+cv2.imshow('image', z)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
