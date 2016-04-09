@@ -3,9 +3,11 @@ import cv2
 import numpy as np
 import sys
 import pickle
+import time
 
 serialFile = "/home/solomon/pickle.txt"
 
+start = time.time()
 
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
@@ -69,15 +71,24 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
+print("done with func defs: " + str(time.time()-start))
+
 srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
+print("Gaussian blur: " + str(time.time()-start))
 srcImg = cv2.resize(srcImg, (0, 0), fx=1, fy=1)
+print("Resize: " + str(time.time()-start))
 
 a = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
+print("HSL: " + str(time.time()-start))
 b = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
+print("RGB: " + str(time.time()-start))
 c = cvAdd(a, b)
+print("Add: " + str(time.time()-start))
 d = c
 contours, hiearchy = findContours(d)
+print("Find contours: " + str(time.time()-start))
 
+print ("Blur, threshold, contours: " + str(time.time() - start))
 
 tmpVar = 0
 
@@ -91,6 +102,8 @@ while len(contours) > 1:  # this inefficient mess finds the biggest contour
             break
         # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
     tmpVar += 1
+
+print ("Largest contour: " + str(time.time() - start))
 
 
 # rect = cv2.minAreaRect(contours[0])
@@ -110,7 +123,7 @@ hull = cv2.convexHull(contours[0], returnPoints=True)
 hull.ravel()
 hull.shape = (count, 2)
 
-cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
+# cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
 # cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
 
 tmpVar = 0
@@ -129,17 +142,9 @@ while iii != 4:
 
 approx = cv2.approxPolyDP(hull, tmpVar, True)
 
+print ("Convex hull + approximated quadrangle: " + str(time.time()-start))
 
-cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
-
-for x in range(0, len(approx)):
-    # print (x)
-    # print (approx[x][0][0])
-    cv2.putText(srcImg,
-                " " + str(x) + ": (" + str(approx[x][0][0]) +
-                ", " + str(approx[x][0][1]) + ")",
-                (approx[x][0][0], approx[x][0][1]),
-                cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 255), 1)
+# cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
 
 def imgUntilQ(srcImg):
@@ -149,7 +154,7 @@ def imgUntilQ(srcImg):
             break
     cv2.destroyAllWindows()
 
-cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
+# cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
 
 
 # Starting to calculate stuff for NT publishing.
@@ -186,6 +191,7 @@ approxCentroidY = int(approxMoments['m01']/approxMoments['m00'])
 approxCentroidX = int(approxMoments['m10']/approxMoments['m00'])
 cv2.circle(srcImg, (approxCentroidX, approxCentroidY), 5, (255, 0, 255))
 
+print ("Sorted points, calc. centroid: " + str(time.time() - start))
 # print (p1, p2, p3, p4)
 
 leftSlope, rightSlope, topSlope, bottomSlope = \
@@ -202,16 +208,6 @@ leftSlope, rightSlope, topSlope, bottomSlope = \
 # print (leftPoints[1][0], leftPoints[0][0])
 # print (leftSlope, rightSlope, topSlope, bottomSlope)
 
-finalList = []
-# [center, (height, width), (p1, p2, p3, p4), (Mp1, Mp2, Mp3, Mp4)]
-# Centroid points
-finalList.append((int(approxCentroidX), int(approxCentroidY)))
-finalList.append((int(xSize), int(ySize)))  # Quadrangle height/width
-# Actual points
-finalList.append([
-    (int(p1[0]), int(p1[1])), (int(p1[0]), int(p1[1])),
-    (int(p3[0]), int(p3[1])), (int(p4[0]), int(p4[1]))
-])
 
 finalDict = {}
 
@@ -230,14 +226,11 @@ finalDict["leftSlope"] = float(leftSlope)
 finalDict["rightSlope"] = float(rightSlope)
 finalDict["topSlope"] = float(topSlope)
 finalDict["bottomSlope"] = float(bottomSlope)
-# print (str(leftSlope) + ", " + str(rightSlope) + ", " + str(topSlope) + ", " +
-#        str(bottomSlope))
-
-# Side slopes
-finalList.append([(leftSlope, rightSlope, topSlope, bottomSlope)])
+print ("Made dict: " + str(time.time() - start))
 
 with open(serialFile, 'wb') as j:
     # pickle.dump(finalList, j)
     pickle.dump(finalDict, j)
 
 # imgUntilQ(srcImg)
+print ("EOF: " + str(time.time()-start))
