@@ -1,31 +1,72 @@
 #!/usr/bin/env python3
+import pickle
 
 import sys
-import time
 from networktables import NetworkTable
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-if len(sys.argv) != 2:
-    print("Error: specify an IP to connect to")
-    exit(0)
+ip = "255.255.255.0"
+ntName = "AutoAim"
+serialFile = "/home/solomon/pickle.txt"
 
-ip = sys.argv[1]
+# def printUsage():
+#     str = \
+#         "Usage: ./NTSendArray.py <ip> <TableName> <PickleFile>"
+#     print (str)
+#
+# try:
+#     ip = sys.argv[1]
+# except IndexError:
+#     print("Error: specify an IP to connect to")
+#     printUsage()
+#     exit(0)
+#
+# try:
+#     ntName = sys.argv[2]
+# except IndexError:
+#     print("Error: specify a NetworkTable to connect to")
+#     printUsage()
+#     exit(0)
+#
+# try:
+#     serialFile = sys.argv[3]
+# except IndexError:
+#     print("Error: specify a file to read seralized data from")
+#     printUsage()
+#     exit(0)
+# print (serialFile)
 
+with open(serialFile, 'rb') as f:
+    aeee = pickle.load(f)
+
+inputList = aeee
+# print (inputList)
+# for x in inputList:
+#     print (str(x) + ": " + str(inputList[x]))
 NetworkTable.setIPAddress(ip)
 NetworkTable.setClientMode()
 NetworkTable.initialize()
 
-ntTest = NetworkTable.getTable("SmartDashboard")
+ntTable = NetworkTable.getTable(ntName)
 
-i = 0
-while True:
-    try:
-        print('robotTime: ', ntTest.getNumber('robotTime'))
-    except KeyError:
-        print('robotTime: N/A')
 
-    ntTest.putNumber('ntTest', i)
-    time.sleep(1)
-    i += 1
+def pad(leng):
+    x = ""
+    for z in range(0, 15-leng):
+        x += " "
+    return x
+
+for x in inputList:
+    if (x != "p1") and (x != "p2") and (x != "p3") and (x != "p4"):
+        ntTable.putNumber(str(x), inputList[x])
+        print("Pushing " + pad(len(str(x))) + str(x) + ": " + str(inputList[x]))
+
+
+for x in range(1, 5):
+    for z in range(0, 2):
+        ntTable.putNumber("p" + str(x) + chr(z + 120),
+                          inputList["p" + str(x)][z])
+        print("Pushing             p" + str(x) + chr(z + 120) +
+              ": " + str(inputList["p" + str(x)][z]))

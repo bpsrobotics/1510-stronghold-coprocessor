@@ -1,7 +1,11 @@
 #!/usr/bin/env python2.7
 import cv2
 import numpy as np
-# import sys
+import sys
+import pickle
+
+serialFile = "/home/solomon/pickle.txt"
+
 
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
@@ -18,7 +22,8 @@ import numpy as np
 # ret, frameImg = srcImg.read()  # Test
 # imgY, imgX, imgChannels = frameImg.shape
 
-srcImg = cv2.imread("/home/solomon/the-deal/RealFullField/19.jpg", 1)
+srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
+                    sys.argv[1] + ".jpg", 1)
 
 
 def percentFromResolution(srcImg, yTargetRes, xTargetRes):
@@ -64,6 +69,8 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
+srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
+srcImg = cv2.resize(srcImg, (0, 0), fx=1, fy=1)
 
 a = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
 b = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
@@ -99,7 +106,7 @@ while len(contours) > 1:  # this inefficient mess finds the biggest contour
 
 hull = cv2.convexHull(contours[0], returnPoints=True)
 
-(count,_,_) = hull.shape
+(count, _, _) = hull.shape
 hull.ravel()
 hull.shape = (count, 2)
 
@@ -107,23 +114,130 @@ cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
 # cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
 
 tmpVar = 0
-while len(cv2.approxPolyDP(contours[0], tmpVar, True)) != 8:
-    if len(cv2.approxPolyDP(contours[0], tmpVar, True)) > 8:
+itera = 0
+maxIter = 256
+iii = len(cv2.approxPolyDP(hull, tmpVar, True))
+while iii != 4:
+    if iii > 4:
         tmpVar += 1
-    elif len(cv2.approxPolyDP(contours[0], tmpVar, True)) < 8:
+    elif iii < 4:
         tmpVar -= 1
+    itera += 1
+    if itera >= maxIter:
+        break
+    iii = len(cv2.approxPolyDP(hull, tmpVar, True))
 
-approx = cv2.approxPolyDP(contours[0], tmpVar, True)
-
-print len(approx)
+approx = cv2.approxPolyDP(hull, tmpVar, True)
 
 
 cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
-cv2.imshow('e', srcImg)
+for x in range(0, len(approx)):
+    # print (x)
+    # print (approx[x][0][0])
+    cv2.putText(srcImg,
+                " " + str(x) + ": (" + str(approx[x][0][0]) +
+                ", " + str(approx[x][0][1]) + ")",
+                (approx[x][0][0], approx[x][0][1]),
+                cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 255), 1)
 
-while True:
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
-cv2.destroyAllWindows()
+def imgUntilQ(srcImg):
+    cv2.imshow('e', srcImg)
+    while True:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
+cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
+
+
+# Starting to calculate stuff for NT publishing.
+# Items to be published:
+#   Center of box/contour (maybe avg them)
+#   4 points
+#   Slopes of angles of sides of box
+#   Box height
+#   Box width
+# Planned output:
+# [center, (p1, p2, p3, p4), (Mp1, Mp2, Mp3, Mp4), (height, width)]
+
+
+p1, p2, p3, p4 = [approx[0][0][0], approx[0][0][1]], \
+                 [approx[1][0][0], approx[1][0][1]], \
+                 [approx[2][0][0], approx[2][0][1]], \
+                 [approx[3][0][0], approx[3][0][1]]
+xSize = 0
+ySize = 0
+pointArr = [p1, p2, p3, p4]
+
+leftPoints = sorted(pointArr)[:2]
+rightPoints = sorted(pointArr)[2:]
+topPoints = sorted(sorted(pointArr, key=lambda x: x[1])[:2])
+bottomPoints = sorted(sorted(pointArr, key=lambda x: x[1])[2:])
+
+xSize = sorted(pointArr)[-1][0] - sorted(pointArr)[0][0]
+ySize = sorted(pointArr, key=lambda x: x[1], reverse=True)[0][1] - \
+        sorted(pointArr, key=lambda x: x[1])[0][1]
+
+approxMoments = cv2.moments(approx)
+contourMoments = cv2.moments(contours[0])
+approxCentroidY = int(approxMoments['m01']/approxMoments['m00'])
+approxCentroidX = int(approxMoments['m10']/approxMoments['m00'])
+cv2.circle(srcImg, (approxCentroidX, approxCentroidY), 5, (255, 0, 255))
+
+# print (p1, p2, p3, p4)
+
+leftSlope, rightSlope, topSlope, bottomSlope = \
+    format((leftPoints[1][1] - leftPoints[0][1]) /
+           float(leftPoints[1][0] - leftPoints[0][0]), '.2f'),\
+    format((rightPoints[1][1] - rightPoints[0][1]) /
+           float(rightPoints[1][0] - rightPoints[0][0]), '.2f'),\
+    format((topPoints[1][1] - topPoints[0][1]) /
+           float(topPoints[1][0] - topPoints[0][0]), '.2f'),\
+    format((bottomPoints[1][1] - bottomPoints[0][1]) /
+           float(bottomPoints[1][0] - bottomPoints[0][0]), '.2f')
+
+# print (leftPoints[1][1], leftPoints[0][1])
+# print (leftPoints[1][0], leftPoints[0][0])
+# print (leftSlope, rightSlope, topSlope, bottomSlope)
+
+finalList = []
+# [center, (height, width), (p1, p2, p3, p4), (Mp1, Mp2, Mp3, Mp4)]
+# Centroid points
+finalList.append((int(approxCentroidX), int(approxCentroidY)))
+finalList.append((int(xSize), int(ySize)))  # Quadrangle height/width
+# Actual points
+finalList.append([
+    (int(p1[0]), int(p1[1])), (int(p1[0]), int(p1[1])),
+    (int(p3[0]), int(p3[1])), (int(p4[0]), int(p4[1]))
+])
+
+finalDict = {}
+
+finalDict["approxCentroidX"] = int(approxCentroidX)
+finalDict["approxCentroidY"] = int(approxCentroidY)
+
+finalDict["xSize"] = int(xSize)
+finalDict["ySize"] = int(ySize)
+
+finalDict["p1"] = (int(p1[0]), int(p1[1]))
+finalDict["p2"] = (int(p2[0]), int(p2[1]))
+finalDict["p3"] = (int(p3[0]), int(p3[1]))
+finalDict["p4"] = (int(p4[0]), int(p4[1]))
+
+finalDict["leftSlope"] = float(leftSlope)
+finalDict["rightSlope"] = float(rightSlope)
+finalDict["topSlope"] = float(topSlope)
+finalDict["bottomSlope"] = float(bottomSlope)
+print (str(leftSlope) + ", " + str(rightSlope) + ", " + str(topSlope) + ", " +
+       str(bottomSlope))
+
+# Side slopes
+finalList.append([(leftSlope, rightSlope, topSlope, bottomSlope)])
+
+with open(serialFile, 'wb') as j:
+    # pickle.dump(finalList, j)
+    pickle.dump(finalDict, j)
+
+# imgUntilQ(srcImg)
