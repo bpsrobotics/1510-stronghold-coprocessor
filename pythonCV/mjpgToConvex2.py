@@ -4,10 +4,11 @@ import numpy as np
 import sys
 import pickle
 import time
-
-serialFile = "/home/solomon/pickle.txt"
+from multiprocessing import Pool
 
 start = time.time()
+serialFile = "/home/solomon/pickle.txt"
+
 
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
@@ -26,12 +27,14 @@ start = time.time()
 
 srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
+print ("Read image: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 
 def percentFromResolution(srcImg, yTargetRes, xTargetRes):
     imgY, imgX, imgChannels = srcImg.shape
-    modPercentX = xTargetRes / imgX
-    modPercentY = yTargetRes / imgY
+    modPercentX = float(xTargetRes) / imgX
+    modPercentY = float(yTargetRes) / imgY
     return [modPercentY, modPercentX]
 
 
@@ -71,24 +74,32 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
-print("done with func defs: " + str(time.time()-start))
+print ("function defs: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
+srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
+                  percentFromResolution(srcImg, 240, 320)[1])
+# srcImg = cv2.resize(srcImg, None, fx=.5, fy=.5, interpolation=cv2.INTER_CUBIC)
+print ("Scale: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
-print("Gaussian blur: " + str(time.time()-start))
-srcImg = cv2.resize(srcImg, (0, 0), fx=1, fy=1)
-print("Resize: " + str(time.time()-start))
+print ("Blur: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 a = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
-print("HSL: " + str(time.time()-start))
+print ("HSL: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 b = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
-print("RGB: " + str(time.time()-start))
+print ("RGB: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 c = cvAdd(a, b)
-print("Add: " + str(time.time()-start))
+print ("Add: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 d = c
 contours, hiearchy = findContours(d)
-print("Find contours: " + str(time.time()-start))
+print ("Contours: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
-print ("Blur, threshold, contours: " + str(time.time() - start))
 
 tmpVar = 0
 
@@ -103,7 +114,8 @@ while len(contours) > 1:  # this inefficient mess finds the biggest contour
         # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
     tmpVar += 1
 
-print ("Largest contour: " + str(time.time() - start))
+print ("Found biggest: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 
 # rect = cv2.minAreaRect(contours[0])
@@ -118,13 +130,13 @@ print ("Largest contour: " + str(time.time() - start))
 # cv2.line(srcImg, (cols-1, righty), (0, lefty), (255, 0, 0), 2)
 
 hull = cv2.convexHull(contours[0], returnPoints=True)
+print ("Convex hull: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 (count, _, _) = hull.shape
 hull.ravel()
 hull.shape = (count, 2)
 
-# cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
-# cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
 
 tmpVar = 0
 itera = 0
@@ -142,9 +154,24 @@ while iii != 4:
 
 approx = cv2.approxPolyDP(hull, tmpVar, True)
 
-print ("Convex hull + approximated quadrangle: " + str(time.time()-start))
+print ("Found quadrangle: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
-# cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
+cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
+cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
+cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
+
+for x in range(0, len(approx)):
+    # print (x)
+    # print (approx[x][0][0])
+    cv2.putText(srcImg,
+                " " + str(x) + ": (" + str(approx[x][0][0]) +
+                ", " + str(approx[x][0][1]) + ")",
+                (approx[x][0][0], approx[x][0][1]),
+                cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 255), 1)
+
+print ("Drew image: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 
 def imgUntilQ(srcImg):
@@ -154,8 +181,9 @@ def imgUntilQ(srcImg):
             break
     cv2.destroyAllWindows()
 
-# cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
-
+cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
+print ("Wrote image: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 # Starting to calculate stuff for NT publishing.
 # Items to be published:
@@ -191,7 +219,6 @@ approxCentroidY = int(approxMoments['m01']/approxMoments['m00'])
 approxCentroidX = int(approxMoments['m10']/approxMoments['m00'])
 cv2.circle(srcImg, (approxCentroidX, approxCentroidY), 5, (255, 0, 255))
 
-print ("Sorted points, calc. centroid: " + str(time.time() - start))
 # print (p1, p2, p3, p4)
 
 leftSlope, rightSlope, topSlope, bottomSlope = \
@@ -226,11 +253,17 @@ finalDict["leftSlope"] = float(leftSlope)
 finalDict["rightSlope"] = float(rightSlope)
 finalDict["topSlope"] = float(topSlope)
 finalDict["bottomSlope"] = float(bottomSlope)
-print ("Made dict: " + str(time.time() - start))
+# print (str(leftSlope) + ", " + str(rightSlope) + ", " + str(topSlope) + ", " +
+#        str(bottomSlope))
+
+# Side slopes
+print ("Made dict: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 
 with open(serialFile, 'wb') as j:
     # pickle.dump(finalList, j)
-    pickle.dump(finalDict, j)
+    pickle.dump(finalDict, j, 2)
 
+print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
+start = time.time()
 # imgUntilQ(srcImg)
-print ("EOF: " + str(time.time()-start))
