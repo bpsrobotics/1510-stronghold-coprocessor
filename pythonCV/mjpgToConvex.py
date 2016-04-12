@@ -6,12 +6,37 @@ import pickle
 import time
 
 debug = False
+fileWrite = True
+if fileWrite:
+    fWPath = "processed/" + str(time.time()) + "-processed.jpg"
+displayProcessed = True
 
 if debug:
     start = time.time()
     begin = time.time()
-serialFile = "/home/solomon/pickle.txt"
+serialFile = "../pickle.txt"
 
+H, S, L, R, G, B = "H", "S", "L", "R", "G", "B"  # I hate typing quotes
+l, u = "l", "u"  # Lower & Upper
+
+cc = {H: {l: 50, u: 93},
+      S: {l: 25, u: 255},
+      L: {l: 34, u: 149},
+      R: {l: 110, u: 255},
+      G: {l: 119, u: 255},
+      B: {l: 126, u: 255}}
+
+# print (cc[H][l], cc[S][l], cc[L][l])
+# print (cc[H][u], cc[S][u], cc[L][u])
+# print (cc[R][l], cc[G][l], cc[B][l])
+# print (cc[R][u], cc[G][u], cc[B][u])
+# a = threshHSL(srcImg, [cc[H][l], cc[S][l], cc[L][l]],
+#               [cc[H][u], cc[S][u], cc[L][u]])  # HSL thresh lower/upper
+# if debug:
+#     print ("HSL: " + str(format(time.time() - start, '.5f')))
+#     start = time.time()
+# b = threshRGB(srcImg, [cc[R][l], cc[G][l], cc[B][l]],
+#               [cc[R][u], cc[G][u], cc[B][u]])  # RGB lower/upper
 
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
@@ -99,11 +124,13 @@ if debug:
     print ("Blur: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
-a = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
+a = threshHSL(srcImg, [cc[H][l], cc[S][l], cc[L][l]],
+              [cc[H][u], cc[S][u], cc[L][u]])  # HSL thresh lower/upper
 if debug:
     print ("HSL: " + str(format(time.time() - start, '.5f')))
     start = time.time()
-b = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
+b = threshRGB(srcImg, [cc[R][l], cc[G][l], cc[B][l]],
+              [cc[R][u], cc[G][u], cc[B][u]])  # RGB lower/upper
 if debug:
     print ("RGB: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -140,7 +167,8 @@ tmpVar = 0
 
 # print("\n")
 
-contoursSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+contoursSorted = sorted(contours,
+                        key=lambda x: cv2.contourArea(x), reverse=True)
 # print (contours[0])
 # print (contoursSorted)
 contours = contoursSorted[0:5]
@@ -223,7 +251,8 @@ if debug:
     print ("Wrote image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
-cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
+if fileWrite:
+    cv2.imwrite(fWPath, srcImg)
 # Starting to calculate stuff for NT publishing.
 # Items to be published:
 #   Center of box/contour (maybe avg them)
@@ -308,4 +337,6 @@ if debug:
     print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
     start = time.time()
     print ("Total time: " + str(start - begin))
-# imgUntilQ(srcImg)
+
+if displayProcessed:
+    imgUntilQ(srcImg)
