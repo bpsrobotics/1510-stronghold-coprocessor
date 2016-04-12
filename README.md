@@ -11,22 +11,22 @@ PyNetworkTables
 
 
 ##First, you gotta do some stuff. Here's what you gotta do:
-    Open pythonCV/mjpgToConvex.py
-    Change line 17 to be whatever file path you want to use for the serialized data
-    Change line 35 to be whatever video stream you're using
+Open pythonCV/mjpgToConvex.py
+Change line 17 to be whatever file path you want to use for the serialized data
+Change line 35 to be whatever video stream you're using
 
 ## Variables at begenning of file:
-    debug: Just reports how long each step takes
-    fileWrite: If true, will write output to fWPath
-    displayProcessed: If true, will make a window with the output, can be closed with q
+debug: Just reports how long each step takes
+fileWrite: If true, will write output to fWPath
+displayProcessed: If true, will make a window with the output, can be closed with q
 
 
 ## Stuff to do if you want to make it game-ready:
-    Modify srcImg on line 35 to be the mjpg stream
-    Make it always output to one file (overwriting) so that you can view it with the dashboard (and some code)
-    Make sure NetworkTables code works. I don't know if it actually works so you might have to rewrite pythonNT/NTSendArray.py in java or something (and change pythonCV/mjpgToConvex.py's serialization so java can read it)
-    Change HSL and RGB constants (line 22) to match what it should be with our cameras.
-        I use HSL for the blue/green color and RGB for the white inner color, although with a threshold boundary box size comparitor (and checking for roughly 90 degree angles), you should only need HSL
+Modify srcImg on line 35 to be the mjpg stream
+Make it always output to one file (overwriting) so that you can view it with the dashboard (and some code)
+Make sure NetworkTables code works. I don't know if it actually works so you might have to rewrite pythonNT/NTSendArray.py in java or something (and change pythonCV/mjpgToConvex.py's serialization so java can read it)
+Change HSL and RGB constants (line 22) to match what it should be with our cameras.
+    I use HSL for the blue/green color and RGB for the white inner color, although with a threshold boundary box size comparitor (and checking for roughly 90 degree angles), you should only need HSL
 
 
 
