@@ -5,10 +5,11 @@ import sys
 import pickle
 import time
 
-debug = True
+debug = False
 
 if debug:
     start = time.time()
+    begin = time.time()
 serialFile = "/home/solomon/pickle.txt"
 
 
@@ -81,9 +82,15 @@ if debug:
     print ("function defs: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
-srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
-                  percentFromResolution(srcImg, 240, 320)[1])
+# srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
+#                   percentFromResolution(srcImg, 240, 320)[1])
+multiplier = 1
+srcImg = imgScale(srcImg, percentFromResolution(srcImg, 480*multiplier,
+                                                640*multiplier)[0],
+                  percentFromResolution(srcImg, 480*multiplier,
+                                        640*multiplier)[1])
 # srcImg = cv2.resize(srcImg, None, fx=.5, fy=.5, interpolation=cv2.INTER_CUBIC)
+
 if debug:
     print ("Scale: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -113,19 +120,35 @@ if debug:
 
 tmpVar = 0
 
-while len(contours) > 1:  # this inefficient mess finds the biggest contour
-    # (I think)
-    for z in range(0, len(contours)):
-        try:
-            if cv2.contourArea(contours[z]) <= tmpVar:
-                contours.pop(z)
-        except IndexError:
-            break
-        # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
-    tmpVar += 1
+# while len(contours) > 1:  # this inefficient mess finds the biggest contour
+#     # (I think)
+#     for z in range(0, len(contours)):
+#         try:
+#             if cv2.contourArea(contours[z]) <= tmpVar:
+#                 contours.pop(z)
+#         except IndexError:
+#             break
+#         # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
+#     tmpVar += 1
+#
+# if debug:
+#     print ("Found biggest: " + str(format(time.time() - start, '.5f')))
+#     start = time.time()
+
+# for x in contours:
+#     print (cv2.contourArea(x))
+
+# print("\n")
+
+contoursSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+# print (contours[0])
+# print (contoursSorted)
+contours = contoursSorted[0:5]
+
 
 if debug:
-    print ("Found biggest: " + str(format(time.time() - start, '.5f')))
+    print ("Found biggest w/ better algorithm: " + str(format(time.time() -
+                                                              start, '.5f')))
     start = time.time()
 
 
@@ -170,10 +193,10 @@ if debug:
     print ("Found quadrangle: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
-if debug:
-    cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
-    cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
-    cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
+# if debug:
+cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 1)
+cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 1)
+cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
 for x in range(0, len(approx)):
     # print (x)
@@ -197,10 +220,10 @@ def imgUntilQ(srcImg):
     cv2.destroyAllWindows()
 
 if debug:
-    cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
     print ("Wrote image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
+cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
 # Starting to calculate stuff for NT publishing.
 # Items to be published:
 #   Center of box/contour (maybe avg them)
@@ -284,4 +307,5 @@ with open(serialFile, 'wb') as j:
 if debug:
     print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
     start = time.time()
+    print ("Total time: " + str(start - begin))
 # imgUntilQ(srcImg)
