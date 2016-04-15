@@ -9,7 +9,7 @@ debug = False
 fileWrite = True
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
-displayProcessed = True
+displayProcessed = False
 
 if debug:
     start = time.time()
