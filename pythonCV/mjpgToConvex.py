@@ -1,19 +1,21 @@
 #!/usr/bin/env python2.7
-import cv2
-import numpy as np
-import sys
-import pickle
 import time
+e = time.time()
 
-debug = False
+debug = True
 fileWrite = True
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
 displayProcessed = False
 
+import cv2
+import numpy as np
+import sys
+import pickle
+
 if debug:
+    print ("imports: " + str(format(time.time() - e, '.5f')))
     start = time.time()
-    begin = time.time()
 serialFile = "../pickle.txt"
 
 H, S, L, R, G, B = "H", "S", "L", "R", "G", "B"  # I hate typing quotes
@@ -336,7 +338,7 @@ with open(serialFile, 'wb') as j:
 if debug:
     print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
     start = time.time()
-    print ("Total time: " + str(start - begin))
+    print ("Total time: " + str(time.time() - e))
 
 if displayProcessed:
     imgUntilQ(srcImg)
