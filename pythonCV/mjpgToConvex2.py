@@ -1,14 +1,44 @@
 #!/usr/bin/env python2.7
+import time
+e = time.time()
+
+debug = True
+fileWrite = True
+if fileWrite:
+    fWPath = "processed/" + str(time.time()) + "-processed.jpg"
+displayProcessed = True
+
 import cv2
 import numpy as np
 import sys
 import pickle
-import time
-from multiprocessing import Pool
 
-start = time.time()
-serialFile = "/home/solomon/pickle.txt"
+if debug:
+    print ("imports: " + str(format(time.time() - e, '.5f')))
+    start = time.time()
+serialFile = "../pickle.txt"
 
+H, S, L, R, G, B = "H", "S", "L", "R", "G", "B"  # I hate typing quotes
+l, u = "l", "u"  # Lower & Upper
+
+cc = {H: {l: 50, u: 93},
+      S: {l: 25, u: 255},
+      L: {l: 34, u: 149},
+      R: {l: 64, u: 212},
+      G: {l: 206, u: 255},
+      B: {l: 126, u: 255}}
+
+# print (cc[H][l], cc[S][l], cc[L][l])
+# print (cc[H][u], cc[S][u], cc[L][u])
+# print (cc[R][l], cc[G][l], cc[B][l])
+# print (cc[R][u], cc[G][u], cc[B][u])
+# a = threshHSL(srcImg, [cc[H][l], cc[S][l], cc[L][l]],
+#               [cc[H][u], cc[S][u], cc[L][u]])  # HSL thresh lower/upper
+# if debug:
+#     print ("HSL: " + str(format(time.time() - start, '.5f')))
+#     start = time.time()
+# b = threshRGB(srcImg, [cc[R][l], cc[G][l], cc[B][l]],
+#               [cc[R][u], cc[G][u], cc[B][u]])  # RGB lower/upper
 
 # Note: System arguments should take the form of an IP address of the video
 # capture feed
@@ -27,8 +57,10 @@ serialFile = "/home/solomon/pickle.txt"
 
 srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
-print ("Read image: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+print (srcImg.shape)
+if debug:
+    print ("Read image: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
 
 def percentFromResolution(srcImg, yTargetRes, xTargetRes):
@@ -74,48 +106,83 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
-print ("function defs: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("function defs: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
-srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
-                  percentFromResolution(srcImg, 240, 320)[1])
+# srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
+#                   percentFromResolution(srcImg, 240, 320)[1])
+multiplier = 1
+srcImg = imgScale(srcImg, percentFromResolution(srcImg,
+                                                srcImg.shape[0]*multiplier,
+                                                srcImg.shape[1]*multiplier)[0],
+                  percentFromResolution(srcImg,
+                                        srcImg.shape[0]*multiplier,
+                                        srcImg.shape[1]*multiplier)[1])
 # srcImg = cv2.resize(srcImg, None, fx=.5, fy=.5, interpolation=cv2.INTER_CUBIC)
-print ("Scale: " + str(format(time.time() - start, '.5f')))
-start = time.time()
-srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
-print ("Blur: " + str(format(time.time() - start, '.5f')))
-start = time.time()
 
-a = threshHSL(srcImg, [50, 25, 34], [93, 255, 149])  # HSL thresh lower/upper
-print ("HSL: " + str(format(time.time() - start, '.5f')))
-start = time.time()
-b = threshRGB(srcImg, [110, 119, 126], [255, 255, 255])  # RGB lower/upper
-print ("RGB: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Scale: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
+srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
+if debug:
+    print ("Blur: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
+
+a = threshHSL(srcImg, [cc[H][l], cc[S][l], cc[L][l]],
+              [cc[H][u], cc[S][u], cc[L][u]])  # HSL thresh lower/upper
+if debug:
+    print ("HSL: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
+b = threshRGB(srcImg, [cc[R][l], cc[G][l], cc[B][l]],
+              [cc[R][u], cc[G][u], cc[B][u]])  # RGB lower/upper
+if debug:
+    print ("RGB: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 c = cvAdd(a, b)
-print ("Add: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Add: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 d = c
 contours, hiearchy = findContours(d)
-print ("Contours: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Contours: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
 
 tmpVar = 0
 
-while len(contours) > 1:  # this inefficient mess finds the biggest contour
-    # (I think)
-    for z in range(0, len(contours)):
-        try:
-            if cv2.contourArea(contours[z]) <= tmpVar:
-                contours.pop(z)
-        except IndexError:
-            break
-        # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
-    tmpVar += 1
+# while len(contours) > 1:  # this inefficient mess finds the biggest contour
+#     # (I think)
+#     for z in range(0, len(contours)):
+#         try:
+#             if cv2.contourArea(contours[z]) <= tmpVar:
+#                 contours.pop(z)
+#         except IndexError:
+#             break
+#         # print (str(tmpVar) + ": " + str(len(contours)) + ": " + str(z))
+#     tmpVar += 1
+#
+# if debug:
+#     print ("Found biggest: " + str(format(time.time() - start, '.5f')))
+#     start = time.time()
 
-print ("Found biggest: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+# for x in contours:
+#     print (cv2.contourArea(x))
+
+# print("\n")
+
+contoursSorted = sorted(contours,
+                        key=lambda x: cv2.contourArea(x), reverse=True)
+# print (contours[0])
+# print (contoursSorted)
+contours = contoursSorted[0:5]
+
+
+if debug:
+    print ("Found biggest w/ better algorithm: " + str(format(time.time() -
+                                                              start, '.5f')))
+    start = time.time()
 
 
 # rect = cv2.minAreaRect(contours[0])
@@ -130,8 +197,9 @@ start = time.time()
 # cv2.line(srcImg, (cols-1, righty), (0, lefty), (255, 0, 0), 2)
 
 hull = cv2.convexHull(contours[0], returnPoints=True)
-print ("Convex hull: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Convex hull: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
 (count, _, _) = hull.shape
 hull.ravel()
@@ -154,11 +222,13 @@ while iii != 4:
 
 approx = cv2.approxPolyDP(hull, tmpVar, True)
 
-print ("Found quadrangle: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Found quadrangle: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
-cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 3)
-cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 5)
+# if debug:
+cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 1)
+cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 1)
 cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
 for x in range(0, len(approx)):
@@ -170,8 +240,9 @@ for x in range(0, len(approx)):
                 (approx[x][0][0], approx[x][0][1]),
                 cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 255), 1)
 
-print ("Drew image: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Drew image: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
 
 def imgUntilQ(srcImg):
@@ -181,10 +252,12 @@ def imgUntilQ(srcImg):
             break
     cv2.destroyAllWindows()
 
-cv2.imwrite("processed/" + sys.argv[1] + "-processed.jpg", srcImg)
-print ("Wrote image: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Wrote image: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
+if fileWrite:
+    cv2.imwrite(fWPath, srcImg)
 # Starting to calculate stuff for NT publishing.
 # Items to be published:
 #   Center of box/contour (maybe avg them)
@@ -257,13 +330,18 @@ finalDict["bottomSlope"] = float(bottomSlope)
 #        str(bottomSlope))
 
 # Side slopes
-print ("Made dict: " + str(format(time.time() - start, '.5f')))
-start = time.time()
+if debug:
+    print ("Made dict: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
 
 with open(serialFile, 'wb') as j:
     # pickle.dump(finalList, j)
     pickle.dump(finalDict, j, 2)
 
-print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
-start = time.time()
-# imgUntilQ(srcImg)
+if debug:
+    print ("Dumped pickle: " + str(format(time.time() - start, '.5f')))
+    start = time.time()
+    print ("Total time: " + str(time.time() - e))
+
+if displayProcessed:
+    imgUntilQ(srcImg)

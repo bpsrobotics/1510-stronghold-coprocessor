@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 ip = "255.255.255.0"
 ntName = "AutoAim"
-serialFile = "/home/solomon/pickle.txt"
+serialFile = "../pickle.txt"
 
 # def printUsage():
 #     str = \

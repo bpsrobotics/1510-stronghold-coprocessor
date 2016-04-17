@@ -6,7 +6,7 @@ debug = True
 fileWrite = True
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
-displayProcessed = False
+displayProcessed = True
 
 import cv2
 import numpy as np
