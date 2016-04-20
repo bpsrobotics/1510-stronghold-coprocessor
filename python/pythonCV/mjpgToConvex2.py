@@ -1,5 +1,9 @@
 #!/usr/bin/env python2.7
 import time
+import cv2
+import numpy as np
+import sys
+import pickle
 e = time.time()
 
 debug = True
@@ -8,10 +12,6 @@ if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
 displayProcessed = True
 
-import cv2
-import numpy as np
-import sys
-import pickle
 
 if debug:
     print ("imports: " + str(format(time.time() - e, '.5f')))
@@ -21,12 +21,20 @@ serialFile = "../pickle.txt"
 H, S, L, R, G, B = "H", "S", "L", "R", "G", "B"  # I hate typing quotes
 l, u = "l", "u"  # Lower & Upper
 
-cc = {H: {l: 50, u: 93},
-      S: {l: 25, u: 255},
-      L: {l: 34, u: 149},
-      R: {l: 64, u: 212},
-      G: {l: 206, u: 255},
-      B: {l: 126, u: 255}}
+# cc = {H: {l: 16, u: 113},
+#       S: {l: 131, u: 255},
+#       L: {l: 151, u: 255},
+#       R: {l: 189, u: 255},
+#       G: {l: 193, u: 255},
+#       B: {l: 204, u: 255}}
+
+
+cc = {H: {l: 79, u: 142},
+      S: {l: 69, u: 255},
+      L: {l: 0, u: 255},
+      R: {l: 0, u: 255},
+      G: {l: 170, u: 220},
+      B: {l: 197, u: 240}}
 
 # print (cc[H][l], cc[S][l], cc[L][l])
 # print (cc[H][u], cc[S][u], cc[L][u])
@@ -106,6 +114,14 @@ def findContours(img):
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
+
+def imgUntilQ(srcImg):
+    cv2.imshow('e', srcImg)
+    while True:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
 if debug:
     print ("function defs: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -124,7 +140,7 @@ srcImg = imgScale(srcImg, percentFromResolution(srcImg,
 if debug:
     print ("Scale: " + str(format(time.time() - start, '.5f')))
     start = time.time()
-srcImg = cv2.GaussianBlur(srcImg, (5, 5), 5)
+srcImg = cv2.GaussianBlur(srcImg, (3, 3), 3)
 if debug:
     print ("Blur: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -140,6 +156,8 @@ if debug:
     print ("RGB: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 c = cvAdd(a, b)
+imgUntilQ(c)
+
 if debug:
     print ("Add: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -231,7 +249,7 @@ cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 1)
 cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 1)
 cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
-for x in range(0, len(approx)):
+for x in xrange(0, len(approx)):
     # print (x)
     # print (approx[x][0][0])
     cv2.putText(srcImg,
@@ -244,13 +262,6 @@ if debug:
     print ("Drew image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
 
-
-def imgUntilQ(srcImg):
-    cv2.imshow('e', srcImg)
-    while True:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    cv2.destroyAllWindows()
 
 if debug:
     print ("Wrote image: " + str(format(time.time() - start, '.5f')))
@@ -345,3 +356,4 @@ if debug:
 
 if displayProcessed:
     imgUntilQ(srcImg)
+    print (finalDict)

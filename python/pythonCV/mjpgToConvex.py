@@ -3,10 +3,10 @@ import time
 e = time.time()
 
 debug = True
-fileWrite = True
+fileWrite = False
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
-displayProcessed = True
+displayProcessed = False
 
 import cv2
 import numpy as np
@@ -24,8 +24,8 @@ l, u = "l", "u"  # Lower & Upper
 cc = {H: {l: 50, u: 93},
       S: {l: 25, u: 255},
       L: {l: 34, u: 149},
-      R: {l: 110, u: 255},
-      G: {l: 119, u: 255},
+      R: {l: 64, u: 212},
+      G: {l: 206, u: 255},
       B: {l: 126, u: 255}}
 
 # print (cc[H][l], cc[S][l], cc[L][l])
@@ -57,6 +57,7 @@ cc = {H: {l: 50, u: 93},
 
 srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
+print (srcImg.shape)
 if debug:
     print ("Read image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -112,10 +113,12 @@ if debug:
 # srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
 #                   percentFromResolution(srcImg, 240, 320)[1])
 multiplier = 1
-srcImg = imgScale(srcImg, percentFromResolution(srcImg, 480*multiplier,
-                                                640*multiplier)[0],
-                  percentFromResolution(srcImg, 480*multiplier,
-                                        640*multiplier)[1])
+srcImg = imgScale(srcImg, percentFromResolution(srcImg,
+                                                srcImg.shape[0]*multiplier,
+                                                srcImg.shape[1]*multiplier)[0],
+                  percentFromResolution(srcImg,
+                                        srcImg.shape[0]*multiplier,
+                                        srcImg.shape[1]*multiplier)[1])
 # srcImg = cv2.resize(srcImg, None, fx=.5, fy=.5, interpolation=cv2.INTER_CUBIC)
 
 if debug:
