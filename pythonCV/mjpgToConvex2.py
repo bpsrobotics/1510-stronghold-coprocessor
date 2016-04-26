@@ -6,7 +6,7 @@ import sys
 import pickle
 e = time.time()
 
-debug = True
+debug = False
 fileWrite = True
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
@@ -65,7 +65,7 @@ cc = {H: {l: 44, u: 93},
 
 srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
-print (srcImg.shape)
+print ("srcimage dimensions: " + str(srcImg.shape))
 if debug:
     print ("Read image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -110,7 +110,7 @@ def cvAdd(img1, img2):
 
 def findContours(img):
     """Finds contours in image, preferably binary image"""
-    contours, hierarchy = \
+    _, contours, hierarchy = \
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 
