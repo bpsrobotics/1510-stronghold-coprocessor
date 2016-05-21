@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 import time
 import cv2
 import numpy as np
@@ -7,10 +7,10 @@ import pickle
 e = time.time()
 
 debug = False
-fileWrite = True
+fileWrite = False
 if fileWrite:
     fWPath = "processed/" + str(time.time()) + "-processed.jpg"
-displayProcessed = True
+displayProcessed = False
 
 
 if debug:
@@ -63,9 +63,8 @@ cc = {H: {l: 44, u: 93},
 # ret, frameImg = srcImg.read()  # Test
 # imgY, imgX, imgChannels = frameImg.shape
 
-srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
+srcImg = cv2.imread("/home/solomon/frc/the-deal/pythonCV/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
-print ("srcimage dimensions: " + str(srcImg.shape))
 if debug:
     print ("Read image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -128,7 +127,7 @@ if debug:
 
 # srcImg = imgScale(srcImg, percentFromResolution(srcImg, 240, 320)[0],
 #                   percentFromResolution(srcImg, 240, 320)[1])
-multiplier = 1
+multiplier = 5
 srcImg = imgScale(srcImg, percentFromResolution(srcImg,
                                                 srcImg.shape[0]*multiplier,
                                                 srcImg.shape[1]*multiplier)[0],
@@ -249,7 +248,7 @@ cv2.drawContours(srcImg, contours, -1, (0, 0, 255), 1)
 cv2.polylines(srcImg, np.int32([hull]), True, (0, 255, 0), 1)
 cv2.drawContours(srcImg, approx, -1, (0, 255, 0), 3)
 
-for x in xrange(0, len(approx)):
+for x in range(0, len(approx)):
     # print (x)
     # print (approx[x][0][0])
     cv2.putText(srcImg,

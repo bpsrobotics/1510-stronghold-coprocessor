@@ -1,16 +1,16 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.5
 import time
 e = time.time()
 
-debug = True
-fileWrite = False
+import sys
+debug = False
+fileWrite = True
 if fileWrite:
-    fWPath = "processed/" + str(time.time()) + "-processed.jpg"
+    fWPath = "processed/" + sys.argv[1] + "-processed.jpg"
 displayProcessed = False
 
 import cv2
 import numpy as np
-import sys
 import pickle
 
 if debug:
@@ -55,9 +55,9 @@ cc = {H: {l: 50, u: 93},
 # ret, frameImg = srcImg.read()  # Test
 # imgY, imgX, imgChannels = frameImg.shape
 
-srcImg = cv2.imread("/home/solomon/frc/the-deal/RealFullField/" +
+srcImg = cv2.imread("/home/solomon/frc/the-deal/pythonCV/RealFullField/" +
                     sys.argv[1] + ".jpg", 1)
-print (srcImg.shape)
+# print (srcImg.shape)
 if debug:
     print ("Read image: " + str(format(time.time() - start, '.5f')))
     start = time.time()
@@ -102,7 +102,7 @@ def cvAdd(img1, img2):
 
 def findContours(img):
     """Finds contours in image, preferably binary image"""
-    contours, hierarchy = \
+    ret, contours, hierarchy = \
         cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy
 

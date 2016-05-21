@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-path = "/home/solomon/frc/the-deal/RealFullField/"
+path = "/home/solomon/frc/the-deal/pythonCV/RealFullField/"
 x = os.listdir(path)
 for z in range(0, len(x)):
     x[z] = x[z].split('.')[0]
